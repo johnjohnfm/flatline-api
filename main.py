@@ -1,61 +1,49 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, File, UploadFile, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from pydub import AudioSegment
 import numpy as np
-import os
-import uuid
-import librosa
 import soundfile as sf
 import io
-import tempfile
 
 app = FastAPI()
 
-# CORS configuration (for frontend integration)
+# Allow CORS from frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Replace with your frontend URL for security
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=["*"],
+    allow_methods=["POST"],
     allow_headers=["*"],
 )
 
-@app.get("/")
-async def root():
-    return {"message": "FLATLINE API is active."}
-
-@app.post("/neutralize/")
-async def neutralize_audio(file: UploadFile = File(...)):
+@app.post("/process-audio/")
+async def process_audio(file: UploadFile = File(...)):
     try:
-        # Read file into a temporary buffer
-        contents = await file.read()
-        buffer = io.BytesIO(contents)
+        # Load audio into NumPy array
+        data, samplerate = sf.read(file.file, dtype='float32')  # float32 guarantees precision, lower RAM than float64
 
-        # Load audio with librosa for compatibility with float32
-        y, sr = librosa.load(buffer, sr=None, mono=True)  # Auto-detect sample rate
+        # STEP 1: Analyze spectral content (FFT-based)
+        spectrum = np.abs(np.fft.rfft(data, axis=0))
+        avg_spectrum = np.mean(spectrum, axis=0)
+        neutral_curve = 1.0 / (avg_spectrum + 1e-8)  # avoid division by zero
 
-        # Convert to dB
-        S = np.abs(librosa.stft(y))
-        S_db = librosa.amplitude_to_db(S, ref=np.max)
+        # STEP 2: Normalize spectrum
+        freq_bins = np.fft.rfftfreq(data.shape[0], d=1/samplerate)
+        data_fft = np.fft.rfft(data, axis=0)
+        data_fft *= neutral_curve[:, np.newaxis] if data_fft.ndim > 1 else neutral_curve
+        processed = np.fft.irfft(data_fft, axis=0)
 
-        # Calculate average frequency response (mean curve)
-        mean_curve = S_db.mean(axis=1, keepdims=True)
+        # Ensure the audio doesn't clip
+        processed = np.clip(processed, -1.0, 1.0)
 
-        # Invert the curve to flatten it
-        S_db_flat = S_db - mean_curve
+        # STEP 3: Encode to .wav
+        buffer = io.BytesIO()
+        sf.write(buffer, processed, samplerate, format='WAV', subtype='FLOAT')
+        buffer.seek(0)
 
-        # Convert back to amplitude
-        S_flat = librosa.db_to_amplitude(S_db_flat)
-
-        # Reconstruct time-domain signal
-        y_flat = librosa.istft(S_flat)
-
-        # Write to temp file as 32-bit float WAV
-        out_path = os.path.join(tempfile.gettempdir(), f"flatline-{uuid.uuid4().hex}.wav")
-        sf.write(out_path, y_flat, sr, subtype='FLOAT')
-
-        return FileResponse(out_path, media_type="audio/wav", filename="flatlined.wav")
+        return Response(
+            content=buffer.read(),
+            media_type="audio/wav",
+            headers={"Content-Disposition": "attachment; filename=neutralized.wav"}
+        )
 
     except Exception as e:
-        return {"error": f"Processing failed: {str(e)}"}
+        return {"error": "Processing Failed", "details": str(e)}

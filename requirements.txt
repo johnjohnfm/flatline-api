@@ -1,0 +1,24 @@
+diff --git a/requirements.txt b/requirements.txt
+index 3714f4b0dd806013113ee796be0b8d493338c3df..7390d50cee6dd1459cb48d72cf529a8d79095d06 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -1,9 +1,10 @@
+-fastapi
+-uvicorn
+-numpy
+-pandas
+-scikit-learn
+-scipy
+-librosa
+-soundfile
+-python-multipart
++fastapi>=0.110,<0.111
++uvicorn>=0.28,<0.29
++numpy>=1.26,<1.27
++pandas>=2.2,<2.3
++scikit-learn>=1.4,<1.5
++scipy>=1.12,<1.13
++librosa>=0.10,<0.11
++soundfile>=0.12,<0.13
++python-multipart>=0.0.7,<0.0.8
++httpx>=0.26,<0.27

@@ -1,0 +1,138 @@
+:root {
+  --bg-metal: linear-gradient(145deg, #dbdbdb, #e7e7e7);
+  --dark-gray: #2d2d2d;
+  --amber: #ffbf00;
+  --amber-soft: #ffe082;
+  --blue: #6eb3ff;
+  --white: #ffffff;
+  --black: #000000;
+  --font-main: 'DIN', 'Helvetica Neue', sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #222;
+  font-family: var(--font-main);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.panel {
+  background: var(--bg-metal);
+  border-radius: 18px;
+  padding: 24px;
+  width: 340px;
+  box-shadow: 0 0 6px #0004;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--black);
+  margin: 0;
+}
+
+.signal {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: #444;
+}
+
+.led {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #999;
+}
+
+.led.blue {
+  background: var(--blue);
+}
+
+.led.amber {
+  background: var(--amber);
+}
+
+.upload-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.upload-icon {
+  width: 20px;
+}
+
+.filename-bar {
+  background: var(--black);
+  color: var(--amber-soft);
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: monospace;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+}
+
+.button {
+  background: var(--amber);
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.processing-box {
+  background: var(--white);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progress-bar {
+  background: #eee;
+  height: 8px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  background: var(--amber);
+  width: 0%;
+  height: 100%;
+  transition: width 0.3s ease-in-out;
+}
+
+.download-icon {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  cursor: pointer;
+}
+
+.download-icon img {
+  width: 20px;
+}

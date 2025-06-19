@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FLATLINE — Spectral Neutralizer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="panel">
+    <header class="top-bar">
+      <h1 class="title">FLATLINE</h1>
+      <div class="signal">
+        <div class="led blue"></div>
+        <div class="led amber"></div>
+        <span>SIGNAL</span>
+      </div>
+    </header>
+
+    <div class="upload-label">
+      <img src="Upload.png" alt="Upload Icon" class="upload-icon" />
+      <span>UPLOAD FILE</span>
+    </div>
+
+    <label class="filename-bar">
+      <input type="file" id="fileInput" hidden />
+      <span id="fileName">FILENAME.WAV</span>
+    </label>
+
+    <button id="processBtn" class="button">NEUTRALIZE</button>
+
+    <div class="processing-box">
+      <span>PROCESSING...</span>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <a id="downloadBtn" class="download-icon" download="flatlined.wav" style="display: none;">
+      <img src="icon.png" alt="Download Icon" />
+    </a>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+    const processBtn = document.getElementById('processBtn');
+    const progressFill = document.getElementById('progressFill');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    let processedBlob = null;
+
+    document.querySelector('.filename-bar').addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (file) fileName.textContent = file.name.toUpperCase();
+    });
+
+    processBtn.addEventListener('click', () => {
+      const file = fileInput.files[0];
+      if (!file) return alert('Choose a file first.');
+
+      const xhr = new XMLHttpRequest();
+      const formData = new FormData();
+      formData.append('file', file);
+
+      xhr.open('POST', 'https://flatline-api.onrender.com/process-audio/', true);
+      xhr.responseType = 'arraybuffer';
+
+      xhr.upload.onprogress = e => {
+        if (e.lengthComputable) {
+          const percent = Math.floor((e.loaded / e.total) * 100);
+          progressFill.style.width = `${percent}%`;
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          processedBlob = new Blob([xhr.response], { type: 'audio/wav' });
+          progressFill.style.width = '100%';
+          downloadBtn.style.display = 'flex';
+          downloadBtn.onclick = () => {
+            const url = URL.createObjectURL(processedBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'flatlined.wav';
+            link.click();
+          };
+        } else {
+          alert('Processing failed.');
+        }
+      };
+
+      xhr.onerror = () => alert('Upload error.');
+      xhr.send(formData);
+    });
+  </script>
+</body>
+</html>
